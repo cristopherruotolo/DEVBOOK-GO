@@ -169,7 +169,7 @@ func (repositorio Publicacoes) Curtir(publicacaoID uint64) error {
 	if _, erro = statement.Exec(publicacaoID); erro != nil {
 		return erro
 	}
-	
+
 	return nil
 }
 
@@ -191,6 +191,6 @@ func (repositorio Publicacoes) Descurtir(publicacaoID uint64) error {
 	if _, erro = statement.Exec(publicacaoID); erro != nil {
 		return erro
 	}
-	
+
 	return nil
 }
