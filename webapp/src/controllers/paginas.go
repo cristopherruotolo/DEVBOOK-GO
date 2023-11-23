@@ -118,35 +118,12 @@ func CarregarPaginaDeUsuarios(w http.ResponseWriter, r *http.Request) {
 
 func CarregarPerfilDoUsuario(w http.ResponseWriter, r *http.Request) {
 	parametros := mux.Vars(r)
-	usuarioID, erro := strconv.ParseInt(parametros["usuarioID"], 10, 64)
+	usuarioID, erro := strconv.ParseUint(parametros["usuarioID"], 10, 64)
 	if erro != nil {
 		respostas.JSON(w, http.StatusBadRequest, respostas.ErroAPI{Erro: erro.Error()})
 		return
 	}
 
 	usuario, erro := modelos.BuscarUsuarioCompleto(usuarioID, r)
-}
-
-func BuscarUsuarioCompleto(usuarioID uint64, r *http.Request) (Usuario, error) {
-	canalUsuario := make(chan Usuario)
-	canalSeguidores := make(chan []Usuario)
-	canalSeguindo := make(chan []Usuario)
-	canalPublicacoes := make(chan []Publicacao)
-
-	go BuscarDadosDoUsuario(canalUsuario, usuarioID, r)
-	go BuscarSeguidores(canalSeguidores, usuarioID, r)
-	go BuscarSeguindo(canalSeguindo, usuarioID, r)
-	go BuscarPublicacoes(canalPublicacoes, usuarioID, r)
-}
-
-func BuscarDadosDoUsuario(canal <-chan Usuario, usuarioID uint64, r *http.Request) {
-}
-
-func BuscarSeguidores(canal <-chan []Usuario, usuarioID uint64, r *http.Request) {
-}
-
-func BuscarSeguindo(canal <-chan []Usuario, usuarioID uint64, r *http.Request) {
-}
-
-func BuscarPublicacoes(canal <-chan []Publicacao, usuarioID uint64, r *http.Request) {
+	fmt.Println(usuario, erro)
 }
