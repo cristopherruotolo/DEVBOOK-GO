@@ -23,16 +23,17 @@ func CarregarTelaDeLogin(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/home", 302)
 		return
 	}
+
 	utils.ExecutarTemplate(w, "login.html", nil)
 }
 
-func CarregarPaginaDeCadastroUsuario(w http.ResponseWriter, r *http.Request) {
+func CarregarPaginaDeCadastroDeUsuario(w http.ResponseWriter, r *http.Request) {
 	utils.ExecutarTemplate(w, "cadastro.html", nil)
 }
 
 func CarregarPaginaPrincipal(w http.ResponseWriter, r *http.Request) {
 	url := fmt.Sprintf("%s/publicacoes", config.APIURL)
-	response, erro := requisicoes.FazerRequisicaoAutenticacao(r, http.MethodGet, url, nil)
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodGet, url, nil)
 	if erro != nil {
 		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
 		return
@@ -40,7 +41,7 @@ func CarregarPaginaPrincipal(w http.ResponseWriter, r *http.Request) {
 	defer response.Body.Close()
 
 	if response.StatusCode >= 400 {
-		respostas.TratarStatusCodeErro(w, response)
+		respostas.TratarStatusCodeDeErro(w, response)
 		return
 	}
 
@@ -62,15 +63,16 @@ func CarregarPaginaPrincipal(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func CarregarPaginaEdicaoPublicacao(w http.ResponseWriter, r *http.Request) {
+func CarregarPaginaDeAtualizacaoDePublicacao(w http.ResponseWriter, r *http.Request) {
 	parametros := mux.Vars(r)
-	publicacaoID, erro := strconv.ParseInt(parametros["publicacaoId"], 10, 64)
+	publicacaoID, erro := strconv.ParseUint(parametros["publicacaoId"], 10, 64)
 	if erro != nil {
 		respostas.JSON(w, http.StatusBadRequest, respostas.ErroAPI{Erro: erro.Error()})
 		return
 	}
+
 	url := fmt.Sprintf("%s/publicacoes/%d", config.APIURL, publicacaoID)
-	response, erro := requisicoes.FazerRequisicaoAutenticacao(r, http.MethodGet, url, nil)
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodGet, url, nil)
 	if erro != nil {
 		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
 		return
@@ -78,7 +80,7 @@ func CarregarPaginaEdicaoPublicacao(w http.ResponseWriter, r *http.Request) {
 	defer response.Body.Close()
 
 	if response.StatusCode >= 400 {
-		respostas.TratarStatusCodeErro(w, response)
+		respostas.TratarStatusCodeDeErro(w, response)
 		return
 	}
 
@@ -95,7 +97,7 @@ func CarregarPaginaDeUsuarios(w http.ResponseWriter, r *http.Request) {
 	nomeOuNick := strings.ToLower(r.URL.Query().Get("usuario"))
 	url := fmt.Sprintf("%s/usuarios?usuario=%s", config.APIURL, nomeOuNick)
 
-	response, erro := requisicoes.FazerRequisicaoAutenticacao(r, http.MethodGet, url, nil)
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodGet, url, nil)
 	if erro != nil {
 		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
 		return
@@ -103,7 +105,7 @@ func CarregarPaginaDeUsuarios(w http.ResponseWriter, r *http.Request) {
 	defer response.Body.Close()
 
 	if response.StatusCode >= 400 {
-		respostas.TratarStatusCodeErro(w, response)
+		respostas.TratarStatusCodeDeErro(w, response)
 		return
 	}
 
@@ -118,9 +120,17 @@ func CarregarPaginaDeUsuarios(w http.ResponseWriter, r *http.Request) {
 
 func CarregarPerfilDoUsuario(w http.ResponseWriter, r *http.Request) {
 	parametros := mux.Vars(r)
-	usuarioID, erro := strconv.ParseUint(parametros["usuarioID"], 10, 64)
+	usuarioID, erro := strconv.ParseUint(parametros["usuarioId"], 10, 64)
 	if erro != nil {
 		respostas.JSON(w, http.StatusBadRequest, respostas.ErroAPI{Erro: erro.Error()})
+		return
+	}
+
+	cookie, _ := cookies.Ler(r)
+	usuarioLogadoID, _ := strconv.ParseUint(cookie["id"], 10, 64)
+
+	if usuarioID == usuarioLogadoID {
+		http.Redirect(w, r, "/perfil", 302)
 		return
 	}
 
@@ -130,14 +140,43 @@ func CarregarPerfilDoUsuario(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie, _ := cookies.Ler(r)
-	usuarioLogadoID, _ := strconv.ParseUint(cookie["id"], 10, 64)
-
 	utils.ExecutarTemplate(w, "usuario.html", struct {
-		Usuario       modelos.Usuario
+		Usuario         modelos.Usuario
 		UsuarioLogadoID uint64
 	}{
 		Usuario:         usuario,
 		UsuarioLogadoID: usuarioLogadoID,
 	})
+}
+func CarregarPerfilDoUsuarioLogado(w http.ResponseWriter, r *http.Request) {
+	cookie, _ := cookies.Ler(r)
+	usuarioID, _ := strconv.ParseUint(cookie["id"], 10, 64)
+
+	usuario, erro := modelos.BuscarUsuarioCompleto(usuarioID, r)
+	if erro != nil {
+		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
+		return
+	}
+
+	utils.ExecutarTemplate(w, "perfil.html", usuario)
+}
+
+func CarregarPaginaDeEdicaoDeUsuario(w http.ResponseWriter, r *http.Request) {
+	cookie, _ := cookies.Ler(r)
+	usuarioID, _ := strconv.ParseUint(cookie["id"], 10, 64)
+
+	canal := make(chan modelos.Usuario)
+	go modelos.BuscarDadosDoUsuario(canal, usuarioID, r)
+	usuario := <-canal
+
+	if usuario.ID == 0 {
+		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: "Erro ao buscar o usuário"})
+		return
+	}
+
+	utils.ExecutarTemplate(w, "editar-usuario.html", usuario)
+}
+
+func CarregarPaginaDeAtualizacaoDeSenha(w http.ResponseWriter, r *http.Request) {
+	utils.ExecutarTemplate(w, "atualizar-senha.html", nil)
 }

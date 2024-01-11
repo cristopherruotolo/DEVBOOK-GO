@@ -42,7 +42,6 @@ func Ler(r *http.Request) (map[string]string, error) {
 	}
 
 	valores := make(map[string]string)
-
 	if erro = s.Decode("dados", cookie.Value, &valores); erro != nil {
 		return nil, erro
 	}

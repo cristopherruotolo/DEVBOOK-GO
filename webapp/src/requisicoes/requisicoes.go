@@ -6,7 +6,7 @@ import (
 	"webapp/src/cookies"
 )
 
-func FazerRequisicaoAutenticacao(r *http.Request, metodo, url string, dados io.Reader) (*http.Response, error) {
+func FazerRequisicaoComAutenticacao(r *http.Request, metodo, url string, dados io.Reader) (*http.Response, error) {
 	request, erro := http.NewRequest(metodo, url, dados)
 	if erro != nil {
 		return nil, erro

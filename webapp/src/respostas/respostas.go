@@ -21,7 +21,7 @@ func JSON(w http.ResponseWriter, statusCode int, dados interface{}) {
 	}
 }
 
-func TratarStatusCodeErro(w http.ResponseWriter, r *http.Response) {
+func TratarStatusCodeDeErro(w http.ResponseWriter, r *http.Response) {
 	var erro ErroAPI
 	json.NewDecoder(r.Body).Decode(&erro)
 	JSON(w, r.StatusCode, erro)

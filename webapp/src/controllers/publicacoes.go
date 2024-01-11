@@ -20,13 +20,14 @@ func CriarPublicacao(w http.ResponseWriter, r *http.Request) {
 		"titulo":   r.FormValue("titulo"),
 		"conteudo": r.FormValue("conteudo"),
 	})
+
 	if erro != nil {
 		respostas.JSON(w, http.StatusBadRequest, respostas.ErroAPI{Erro: erro.Error()})
 		return
 	}
 
 	url := fmt.Sprintf("%s/publicacoes", config.APIURL)
-	response, erro := requisicoes.FazerRequisicaoAutenticacao(r, http.MethodPost, url, bytes.NewBuffer(publicacao))
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodPost, url, bytes.NewBuffer(publicacao))
 	if erro != nil {
 		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
 		return
@@ -34,23 +35,24 @@ func CriarPublicacao(w http.ResponseWriter, r *http.Request) {
 	defer response.Body.Close()
 
 	if response.StatusCode >= 400 {
-		respostas.TratarStatusCodeErro(w, response)
+		respostas.TratarStatusCodeDeErro(w, response)
 		return
 	}
 
 	respostas.JSON(w, response.StatusCode, nil)
+
 }
 
 func CurtirPublicacao(w http.ResponseWriter, r *http.Request) {
 	parametros := mux.Vars(r)
-	publicacaoID, erro := strconv.ParseInt(parametros["publicacaoId"], 10, 64)
+	publicacaoID, erro := strconv.ParseUint(parametros["publicacaoId"], 10, 64)
 	if erro != nil {
 		respostas.JSON(w, http.StatusBadRequest, respostas.ErroAPI{Erro: erro.Error()})
 		return
 	}
 
 	url := fmt.Sprintf("%s/publicacoes/%d/curtir", config.APIURL, publicacaoID)
-	response, erro := requisicoes.FazerRequisicaoAutenticacao(r, http.MethodPost, url, nil)
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodPost, url, nil)
 	if erro != nil {
 		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
 		return
@@ -58,7 +60,7 @@ func CurtirPublicacao(w http.ResponseWriter, r *http.Request) {
 	defer response.Body.Close()
 
 	if response.StatusCode >= 400 {
-		respostas.TratarStatusCodeErro(w, response)
+		respostas.TratarStatusCodeDeErro(w, response)
 		return
 	}
 
@@ -67,14 +69,14 @@ func CurtirPublicacao(w http.ResponseWriter, r *http.Request) {
 
 func DescurtirPublicacao(w http.ResponseWriter, r *http.Request) {
 	parametros := mux.Vars(r)
-	publicacaoID, erro := strconv.ParseInt(parametros["publicacaoId"], 10, 64)
+	publicacaoID, erro := strconv.ParseUint(parametros["publicacaoId"], 10, 64)
 	if erro != nil {
 		respostas.JSON(w, http.StatusBadRequest, respostas.ErroAPI{Erro: erro.Error()})
 		return
 	}
 
 	url := fmt.Sprintf("%s/publicacoes/%d/descurtir", config.APIURL, publicacaoID)
-	response, erro := requisicoes.FazerRequisicaoAutenticacao(r, http.MethodPost, url, nil)
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodPost, url, nil)
 	if erro != nil {
 		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
 		return
@@ -82,7 +84,7 @@ func DescurtirPublicacao(w http.ResponseWriter, r *http.Request) {
 	defer response.Body.Close()
 
 	if response.StatusCode >= 400 {
-		respostas.TratarStatusCodeErro(w, response)
+		respostas.TratarStatusCodeDeErro(w, response)
 		return
 	}
 
@@ -91,7 +93,7 @@ func DescurtirPublicacao(w http.ResponseWriter, r *http.Request) {
 
 func AtualizarPublicacao(w http.ResponseWriter, r *http.Request) {
 	parametros := mux.Vars(r)
-	publicacaoID, erro := strconv.ParseInt(parametros["publicacaoId"], 10, 64)
+	publicacaoID, erro := strconv.ParseUint(parametros["publicacaoId"], 10, 64)
 	if erro != nil {
 		respostas.JSON(w, http.StatusBadRequest, respostas.ErroAPI{Erro: erro.Error()})
 		return
@@ -102,13 +104,14 @@ func AtualizarPublicacao(w http.ResponseWriter, r *http.Request) {
 		"titulo":   r.FormValue("titulo"),
 		"conteudo": r.FormValue("conteudo"),
 	})
+
 	if erro != nil {
 		respostas.JSON(w, http.StatusBadRequest, respostas.ErroAPI{Erro: erro.Error()})
 		return
 	}
 
 	url := fmt.Sprintf("%s/publicacoes/%d", config.APIURL, publicacaoID)
-	response, erro := requisicoes.FazerRequisicaoAutenticacao(r, http.MethodPut, url, bytes.NewBuffer(publicacao))
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodPut, url, bytes.NewBuffer(publicacao))
 	if erro != nil {
 		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
 		return
@@ -116,7 +119,7 @@ func AtualizarPublicacao(w http.ResponseWriter, r *http.Request) {
 	defer response.Body.Close()
 
 	if response.StatusCode >= 400 {
-		respostas.TratarStatusCodeErro(w, response)
+		respostas.TratarStatusCodeDeErro(w, response)
 		return
 	}
 
@@ -125,14 +128,14 @@ func AtualizarPublicacao(w http.ResponseWriter, r *http.Request) {
 
 func DeletarPublicacao(w http.ResponseWriter, r *http.Request) {
 	parametros := mux.Vars(r)
-	publicacaoID, erro := strconv.ParseInt(parametros["publicacaoId"], 10, 64)
+	publicacaoID, erro := strconv.ParseUint(parametros["publicacaoId"], 10, 64)
 	if erro != nil {
 		respostas.JSON(w, http.StatusBadRequest, respostas.ErroAPI{Erro: erro.Error()})
 		return
 	}
 
 	url := fmt.Sprintf("%s/publicacoes/%d", config.APIURL, publicacaoID)
-	response, erro := requisicoes.FazerRequisicaoAutenticacao(r, http.MethodDelete, url, nil)
+	response, erro := requisicoes.FazerRequisicaoComAutenticacao(r, http.MethodDelete, url, nil)
 	if erro != nil {
 		respostas.JSON(w, http.StatusInternalServerError, respostas.ErroAPI{Erro: erro.Error()})
 		return
@@ -140,7 +143,7 @@ func DeletarPublicacao(w http.ResponseWriter, r *http.Request) {
 	defer response.Body.Close()
 
 	if response.StatusCode >= 400 {
-		respostas.TratarStatusCodeErro(w, response)
+		respostas.TratarStatusCodeDeErro(w, response)
 		return
 	}
 
